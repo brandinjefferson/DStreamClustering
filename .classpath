@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/collections-generic-4.01.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/colt-1.2.0.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/concurrent-1.3.4.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/j3d-core-1.3.1.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jcommon-1.0.16.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jfreechart-1.0.13.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jfreechart-1.0.13-swt.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jumblr-0.0.6-jar-with-dependencies.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jung-algorithms-2.0.1.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jung-api-2.0.1.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jung-graph-impl-2.0.1.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/jung-io-2.0.1.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/stax-api-1.0.1.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/swt_64.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/vecmath-1.3.1.jar"/>
+	<classpathentry kind="lib" path="H:/SocialMediaCode/Drexel Deploy/Code/TumblrDemo/libraries/wstx-asl-3.2.6.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Owner/Documents/School/CVDI/Twitter4j/lib/twitter4j-async-4.0.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Owner/Documents/School/CVDI/Twitter4j/lib/twitter4j-core-4.0.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Owner/Documents/School/CVDI/Twitter4j/lib/twitter4j-stream-4.0.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Owner/Documents/School/CVDI/moa-release-2014.04a/lib/moa.jar" sourcepath="libs/docs/moa/clusterers/denstream">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/C:/Users/Owner/Documents/School/CVDI/moa-release-2014.04a/doc/apidocs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
