@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -19,10 +20,10 @@ public class DStreamTest {
 
 	//Object[][] density_grid = new Object[8][8];
 	public static int dimensions = 0; //The number of unique words found
-	private static int timestamp; // t, the current time as an integer
+	private static volatile int timestamp; // t, the current time as an integer
 	private static int gaptime = 100; // gap, displays the total 
-	public static ArrayList<String> uniqueRecords; //I may have been using this incorrectly
-												//Maybe this should be covered by the density grid
+	public static HashMap<String, Integer> uniqueRecords; //A word count vector - keeps track of the # of times a word has appeared
+	
 	public static Collection<Set<Set<Record>>> densitygrid; //Collection = S, First Set = Si/grids, Second Set = ji/partitions
 	public static RedBlackTree gridlist;
 	
@@ -36,16 +37,13 @@ public class DStreamTest {
 	@Test
 	public void test() {
 		//fail("Not yet implemented");
-		/*for (int i = 0;i<8;i++){
-			for (int j=0;j<8;j++){
-				density_grid[i][j] = new ArrayList<Record>();
-			}
-		}*/
 		Scanner reader = new Scanner(System.in);
 		System.out.print("Begin (0 = No, 1 = Yes): ");
 		int choice = reader.nextInt();
 		if (choice == 1){
 			getTweets();
+			//Create new thread for online component
+			//Create new thread for offline component
 		}
 		reader.close();
 	}
@@ -84,10 +82,9 @@ public class DStreamTest {
 				// TODO Auto-generated method stub
 				//Think about putting these in different threads
 				String[] tokens = tokenizeTweet(status);
-				addDimensions(tokens);			//Add total dimensions from this tweet
+				addToListOfRecords(tokens);
 				
 				ArrayList<Record> currentRecords = convertDataRecords(tokens);
-				updateConnections(currentRecords);
 				
 				
 				timestamp+=1;
@@ -116,18 +113,30 @@ public class DStreamTest {
 		return temp;
 	}
 	
+	//Increase the count of the words or add a word to the word count vector accordingly
+	private void addToListOfRecords(String[] tokens){
+		for (String text : tokens){
+			if (uniqueRecords.containsKey(text)){
+				Integer t = uniqueRecords.get(text)+1;
+				uniqueRecords.replace(text, t);
+			}
+			else {
+				uniqueRecords.put(text, 1);
+			}
+		}
+		addDimensions();
+	}
+	
 	//Remember that if a record is already within the list, update its grid.
 	private ArrayList<Record> convertDataRecords(String[] tokens){
 		ArrayList<Record> tempArray = new ArrayList<Record>();
 		for (String text : tokens){
 			Record newRecord = new Record(text,timestamp);
-			newRecord.initConnections(dimensions);
-			if (!uniqueRecords.contains(text)){
-				newRecord.setAsNew(true);
-				uniqueRecords.add(text);
-			}
-			else{
-				newRecord.setAsNew(false);
+			if (uniqueRecords.get(text) == 1){
+				//Initialize connections if the record is new. 
+				//If the record isn't new, then updateConnections will be called after finding
+				//the record within the grid and mapping it.
+				newRecord.initConnections(uniqueRecords,tokens);
 			}
 			tempArray.add(newRecord);
 		}
@@ -143,26 +152,9 @@ public class DStreamTest {
 		
 	}
 	
-	private void addDimensions(String[] tokens){
-		dimensions+=tokens.length;
+	private void addDimensions(){
+		dimensions=uniqueRecords.size();
 	}
 	
-	//Should be in its own thread? This could take a while
-	private void updateConnections(ArrayList<Record> tokens){
-		int ct = 0;
-		for (int i=0;i<tokens.size();i++){
-			for (int j=0;j<uniqueRecords.size();j++){
-				if (tokens.contains(new Record(uniqueRecords.get(j),timestamp))){
-					Record temp = tokens.get(i);
-					temp.addConnection(j);
-					ct+=1;
-				}
-				if (ct==tokens.size()){
-					ct=0;
-					break;
-				}
-			}
-		}
-	}
 	
 }

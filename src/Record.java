@@ -1,19 +1,25 @@
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import twitter4j.Status;
+
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class Record extends Object {
 	private String word;
 	private Double densityCoefficient;
 	private int timestamp;
-	public ArrayList<Integer> connections;	//Counts number of times word has shown up with the current record
+	public HashMap<String,Integer> connections;	//Counts number of times word has shown up with the current record
 											//Use uniqueRecords as reference for indexes
 	private boolean newrecord;				//Set to true if this record is new, false if it has been seen before
 	
 	public Record(String _word, int time){
 		this.word = _word;
 		this.timestamp = time;
-		this.connections = new ArrayList<Integer>();
+		this.connections = new HashMap<String,Integer>();
 		this.densityCoefficient = 1.0;
 	}
 	
@@ -48,31 +54,47 @@ public class Record extends Object {
 		this.timestamp = newTime;
 	}
 	
-	public void initConnections(int dimensions){
-		for (int i=0;i<dimensions;i++){
-			if (i==dimensions-1){
-				this.connections.add(1);
-			}
-			else{
-				this.connections.add(0);
-			}
+	//Removing items requires an iterator
+	//*******
+	//Initializes the connection vector of a single record by making all counts = 0 except those with
+	//a token as a key
+	// listOfRecords - the word count vector/uniqueRecords in DStreamTest
+	// tokens - list of words that occurred with the current word
+	public void initConnections(HashMap<String,Integer> listOfRecords, String [] tokens){
+		this.connections = listOfRecords;
+		for (Map.Entry<String, Integer> it : listOfRecords.entrySet()){
+			this.connections.replace(it.getKey(), 0);
+		}
+		for (int i=0;i<tokens.length;i++){
+			this.connections.replace(tokens[i],1);
 		}
 	}
 	
-	public void addConnection(int index){
-		/*for (Record e : this.connections){
-			if (e.getWord() == rec.getWord()){
-				System.out.println(e.getWord() + " is already connected to " + rec.getWord());
-				return;
-			}
-		}
-		this.connections.add(rec);*/
-		int a = this.connections.get(index);
-		a+=1;
-		this.connections.remove(index);
-		this.connections.add(index, a);
+	//********
+	//Places a new connection on an old record
+	
+	public void addConnection(String key){
+		this.connections.put(key, 1);
 	}
 	
+	//Used for updating records that already exist but have just been encountered again
+	// tokens - an array of the words that occurred with the record
+	public void updateConnection(String [] tokens){
+		for (int i=0;i<tokens.length;i++){
+			if (findRecord(tokens[i])){
+				int t = this.connections.get(tokens[i])+1;
+				this.connections.replace(tokens[i],t);
+			}
+			else {
+				this.connections.put(tokens[i], 1);
+			}
+		}
+	}
+	//Looks for a record with the given key within the connections hashmap
+	//If it exists, return true
+	public boolean findRecord(String key){
+		return this.connections.containsKey(key);
+	}
 	@Override
 	public boolean equals(Object other){
 		if (other == this) return true;
