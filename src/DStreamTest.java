@@ -118,10 +118,12 @@ public class DStreamTest {
 	//Increase the count of the words or add a word to the word count vector accordingly
 	private void addToListOfRecords(String[] tokens){
 		for (String text : tokens){
+			//If the word is already present, increment its count by 1
 			if (uniqueRecords.containsKey(text)){
 				Integer t = uniqueRecords.get(text)+1;
-				uniqueRecords.replace(text, t);
+				uniqueRecords.put(text, t);
 			}
+			//Otherwise add it with a count of 1
 			else {
 				uniqueRecords.put(text, 1);
 			}

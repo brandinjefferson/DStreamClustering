@@ -26,7 +26,6 @@ public class Record extends Object {
 	//Calculates the density coefficient for the current record
 	//using its timestamp and a given value (lambda) as the decay factor
 	// -----!-------
-	//Call this only when the grid containing the record is updated
 	//lambda = decay factor; 0 < lambda < 1
 	public void calculateDensityCoefficient(int curTimeStamp){
 		//Let lambda = 0.7 for arbitrary reasons
@@ -63,10 +62,10 @@ public class Record extends Object {
 	public void initConnections(HashMap<String,Integer> listOfRecords, String [] tokens){
 		this.connections = listOfRecords;
 		for (Map.Entry<String, Integer> it : listOfRecords.entrySet()){
-			this.connections.replace(it.getKey(), 0);
+			this.connections.put(it.getKey(), 0);
 		}
 		for (int i=0;i<tokens.length;i++){
-			this.connections.replace(tokens[i],1);
+			this.connections.put(tokens[i],1);
 		}
 	}
 	
@@ -83,7 +82,7 @@ public class Record extends Object {
 		for (int i=0;i<tokens.length;i++){
 			if (findRecord(tokens[i])){
 				int t = this.connections.get(tokens[i])+1;
-				this.connections.replace(tokens[i],t);
+				this.connections.put(tokens[i],t);
 			}
 			else {
 				this.connections.put(tokens[i], 1);
