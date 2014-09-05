@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.LinkedList;
 
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -24,7 +25,8 @@ public class DStreamTest {
 	private static int gaptime = 100; // gap, displays the total 
 	public static HashMap<String, Integer> uniqueRecords; //A word count vector - keeps track of the # of times a word has appeared
 	
-	public static Collection<Set<Set<Record>>> densitygrid; //Collection = S, First Set = Si/grids, Second Set = ji/partitions
+	//First List = S, Second List = Si/grids, Third List = ji/partitions
+	public static LinkedList<LinkedList<LinkedList<Record>>> densitygrid = new LinkedList<LinkedList<LinkedList<Record>>>(); 
 	public static RedBlackTree gridlist;
 	
 	
@@ -153,7 +155,26 @@ public class DStreamTest {
 	}
 	
 	private void addDimensions(){
+		int i = uniqueRecords.size() - dimensions;
 		dimensions=uniqueRecords.size();
+		LinkedList<Record> partition = new LinkedList<Record>();
+		LinkedList<LinkedList<Record>> space = new LinkedList<LinkedList<Record>>();
+		for (int j=0;j<i;j++){
+			space.add(partition);
+		}
+		for (int k=0;k<dimensions;k++){
+			if (densitygrid.get(k)!= null){	//If a set exists at this position, add what isn't there.
+				LinkedList<LinkedList<Record>> tempSpace = densitygrid.get(k);
+				while (tempSpace.size() < dimensions){		//While it has less partitions than dimensions
+					tempSpace.add(partition);
+				}
+				densitygrid.remove(k);
+				densitygrid.add(k, tempSpace);
+			}
+			else {
+				densitygrid.add(space);
+			}
+		}
 	}
 	
 	
