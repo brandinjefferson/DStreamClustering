@@ -23,10 +23,11 @@ public class DStreamTest {
 	public static int dimensions = 0; //The number of unique words found
 	private static volatile int timestamp; // t, the current time as an integer
 	private static int gaptime = 100; // gap, displays the total 
-	public static HashMap<String, Integer> uniqueRecords; //A word count vector - keeps track of the # of times a word has appeared
+	public static HashMap<String, Integer> wordCount; //A word count vector - keeps track of the # of times a word has appeared
+	public static HashMap<String, Record> recordsList; //Keeps one copy of each record for every grid to use in updates
 	
 	//First List = S, Second List = Si/grids, Third List = ji/partitions
-	public static LinkedList<LinkedList<LinkedList<Record>>> densitygrid = new LinkedList<LinkedList<LinkedList<Record>>>(); 
+	//public static LinkedList<LinkedList<LinkedList<Record>>> densitygrid = new LinkedList<LinkedList<LinkedList<Record>>>(); 
 	public static RedBlackTree gridlist;
 	
 	
@@ -85,9 +86,8 @@ public class DStreamTest {
 				//Think about putting these in different threads
 				String[] tokens = tokenizeTweet(status);
 				addToListOfRecords(tokens);
-				
-				ArrayList<Record> currentRecords = convertDataRecords(tokens);
-				
+				Record[] currentRecords = convertDataRecords(tokens);
+				mapping(currentRecords);
 				
 				timestamp+=1;
 			}
@@ -119,46 +119,47 @@ public class DStreamTest {
 	private void addToListOfRecords(String[] tokens){
 		for (String text : tokens){
 			//If the word is already present, increment its count by 1
-			if (uniqueRecords.containsKey(text)){
-				Integer t = uniqueRecords.get(text)+1;
-				uniqueRecords.put(text, t);
+			if (wordCount.containsKey(text)){
+				Integer t = wordCount.get(text)+1;
+				wordCount.put(text, t);
+				//recordsList.get(text).updateRecord(timestamp);
 			}
 			//Otherwise add it with a count of 1
 			else {
-				uniqueRecords.put(text, 1);
+				wordCount.put(text, 1);
+				Record temp = new Record(text,timestamp);
+				recordsList.put(text, temp);
 			}
 		}
 		addDimensions();
 	}
 	
-	//Remember that if a record is already within the list, update its grid.
-	private ArrayList<Record> convertDataRecords(String[] tokens){
-		ArrayList<Record> tempArray = new ArrayList<Record>();
+	private Record[] convertDataRecords(String[] tokens){
+		/*ArrayList<Record> tempArray = new ArrayList<Record>();
 		for (String text : tokens){
 			Record newRecord = new Record(text,timestamp);
-			if (uniqueRecords.get(text) == 1){
+			if (wordCount.get(text) == 1){
 				//Initialize connections if the record is new. 
 				//If the record isn't new, then updateConnections will be called after finding
 				//the record within the grid and mapping it.
-				newRecord.initConnections(uniqueRecords,tokens);
+				newRecord.initConnections(wordCount,tokens);
 			}
 			tempArray.add(newRecord);
+		}
+		return tempArray;*/
+		
+		Record[] tempArray = new Record[dimensions];
+		for (int i=0;i<tokens.length;i++){
+			Record temp = new Record(tokens[i],timestamp);
+			temp.initConnections(recordsList);
+			tempArray[i] = temp;
 		}
 		return tempArray;
 	}
 	
-	private void mapToGrid(Record rec){
-		
-	}
-	
-	//Should find which grid the record is in by comparing the words
-	private void findInGrid(String rec){
-		
-	}
-	
-	private void addDimensions(){
-		int i = uniqueRecords.size() - dimensions;
-		dimensions=uniqueRecords.size();
+	/*private void addDimensions(){
+		int i = wordCount.size() - dimensions;
+		dimensions=wordCount.size();
 		LinkedList<Record> partition = new LinkedList<Record>();
 		LinkedList<LinkedList<Record>> space = new LinkedList<LinkedList<Record>>();
 		for (int j=0;j<i;j++){
@@ -175,6 +176,24 @@ public class DStreamTest {
 			}
 			else {
 				densitygrid.add(space);
+			}
+		}
+	}*/
+	
+	private void addDimensions(){
+		dimensions = wordCount.size();
+	}
+	
+	//Map a record to a grid
+	public static void mapping(Record[] records){
+		for (int i=0;i<records.length;i++){
+			ArrayList<Record> array = new ArrayList<Record>();
+			for (int j=0;j<records.length;j++){
+				if (j!=i) array.add(records[j]);
+			}
+			Grid g = new Grid(timestamp, dimensions, array);
+			if (!gridlist.find(g,timestamp,dimensions)){
+				gridlist.add(g);
 			}
 		}
 	}

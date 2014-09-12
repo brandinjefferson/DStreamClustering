@@ -12,15 +12,21 @@ public class Record extends Object {
 	private String word;
 	private Double densityCoefficient;
 	private int timestamp;
-	public HashMap<String,Integer> connections;	//Counts number of times word has shown up with the current record
-											//Use uniqueRecords as reference for indexes
+	public HashMap<String,Record> connections;	//Counts number of times word has shown up with the current record
+											//Use wordCount as reference for indexes
+											//Considered the partitions for a space (each word is a space)
 	private boolean newrecord;				//Set to true if this record is new, false if it has been seen before
 	
 	public Record(String _word, int time){
 		this.word = _word;
 		this.timestamp = time;
-		this.connections = new HashMap<String,Integer>();
+		this.connections = new HashMap<String,Record>();
 		this.densityCoefficient = 1.0;
+	}
+	
+	public void updateRecord(int curTimeStamp){
+		calculateDensityCoefficient(curTimeStamp);
+		updateTimestamp(curTimeStamp);
 	}
 	
 	//Calculates the density coefficient for the current record
@@ -57,43 +63,28 @@ public class Record extends Object {
 	//*******
 	//Initializes the connection vector of a single record by making all counts = 0 except those with
 	//a token as a key
-	// listOfRecords - the word count vector/uniqueRecords in DStreamTest
+	// listOfRecords - the word count vector/recordsList in DStreamTest
 	// tokens - list of words that occurred with the current word
-	public void initConnections(HashMap<String,Integer> listOfRecords, String [] tokens){
+	public void initConnections(HashMap<String,Record> listOfRecords){
 		this.connections = listOfRecords;
-		for (Map.Entry<String, Integer> it : listOfRecords.entrySet()){
-			this.connections.put(it.getKey(), 0);
-		}
-		for (int i=0;i<tokens.length;i++){
-			this.connections.put(tokens[i],1);
-		}
 	}
 	
 	//********
 	//Places a new connection on an old record
-	
-	public void addConnection(String key){
-		this.connections.put(key, 1);
+	public void addConnection(Record e){
+		this.connections.put(e.getWord(), e);
 	}
 	
-	//Used for updating records that already exist but have just been encountered again
-	// tokens - an array of the words that occurred with the record
-	public void updateConnection(String [] tokens){
-		for (int i=0;i<tokens.length;i++){
-			if (findRecord(tokens[i])){
-				int t = this.connections.get(tokens[i])+1;
-				this.connections.put(tokens[i],t);
-			}
-			else {
-				this.connections.put(tokens[i], 1);
-			}
-		}
+	//
+	public void updateConnections(Record[] e){
+		
 	}
 	//Looks for a record with the given key within the connections hashmap
 	//If it exists, return true
 	public boolean findRecord(String key){
 		return this.connections.containsKey(key);
 	}
+	
 	@Override
 	public boolean equals(Object other){
 		if (other == this) return true;

@@ -19,7 +19,7 @@ public class RedBlackTree {
 	      Inserts a new node into the tree.
 	      @param obj the object to insert
 	   */
-	   public void add(Comparable<Object> obj) 
+	   public void add(Grid obj) 
 	   {  
 	      Node newNode = new Node();
 	      newNode.data = obj;
@@ -31,17 +31,22 @@ public class RedBlackTree {
 	   }
 
 	   /**
-	      Tries to find an object in the tree.
+	      Tries to find a grid in the tree; updates the grid if found
 	      @param obj the object to find
+	      @param time the current timestamp
+	      @param dim the current number of dimensions
 	      @return true if the object is contained in the tree
 	   */
-	   public boolean find(Comparable<Object> obj)
+	   public boolean find(Grid obj,int time,int dim)
 	   {
 	      Node current = root;
 	      while (current != null)
 	      {
 	         int d = current.data.compareTo(obj);
-	         if (d == 0) return true;
+	         if (d == 0){
+	        	 current.data.updateCharVector(time, dim);
+	        	 return true;
+	         }
 	         else if (d > 0) current = current.left;
 	         else current = current.right;
 	      }
@@ -53,7 +58,7 @@ public class RedBlackTree {
 	      if the object is not contained in the tree.
 	      @param obj the object to remove
 	   */
-	   public void remove(Comparable<Object> obj)
+	   public void remove(Grid obj)
 	   {
 	      // Find node to be removed
 
@@ -142,7 +147,7 @@ public class RedBlackTree {
 	   */
 	   static class Node
 	   {  
-	      public Comparable<Object> data;
+	      public Grid data;
 	      public Node left;
 	      public Node right;
 	      public Node parent;
@@ -386,7 +391,7 @@ public class RedBlackTree {
 	         n2.color = BLACK;
 	         n4.color = BLACK;
 	         n2.setRightChild(t1);
-	         Comparable<Object> temp = n4.data; n4.data = n3.data; n3.data = temp;
+	         Grid temp = n4.data; n4.data = n3.data; n3.data = temp;
 	         n3.setLeftChild(t2);
 	         n3.setRightChild(t3);
 	         n4.setRightChild(n3);
@@ -405,7 +410,7 @@ public class RedBlackTree {
 	         n3.color = BLACK;
 	         n1.color = BLACK;
 	         n3.setLeftChild(t3);
-	         Comparable<Object> temp = n1.data; n1.data = n2.data; n2.data = temp;
+	         Grid temp = n1.data; n1.data = n2.data; n2.data = temp;
 	         n2.setRightChild(t2);
 	         n2.setLeftChild(t1);
 	         n1.setLeftChild(n2);

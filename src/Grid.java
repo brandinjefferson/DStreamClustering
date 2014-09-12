@@ -5,7 +5,7 @@
  * */
 import java.util.ArrayList;
 
-public class Grid {
+public class Grid implements Comparable<Grid> {
 
 	//These variables function as the characteristic vector
 	//and should be updated every time the grid is updated
@@ -15,7 +15,7 @@ public class Grid {
 	private GridType label;		//Current grid's type
 	
 	//The list of records within the given grid
-	private ArrayList<Record> recordlist;
+	private ArrayList<Record> partitionSets;
 	
 	private enum GridType {
 		DENSE, TRANSITIVE, SPARSE;
@@ -23,19 +23,31 @@ public class Grid {
 	
 	
 	//Use this only when a Grid hasn't been used before
-	public Grid(int timestamp, int dimensions){
+	public Grid(int timestamp, int dimensions,ArrayList<Record> list){
 		tUpdated = timestamp;
 		tRemoved = 0;
 		density = 0.0;
+		partitionSets = list;
 		calculateType(dimensions);
 	}
 	
-	public Grid(int timestamp,int dimensions, Record rec){
+	//Should be updateCharacteristicVector
+	public void updateCharVector(int timestamp,int dimensions){
 		tUpdated = timestamp;
-		tRemoved = 0;
-		recordlist.add(rec);
-		density = rec.getDensityCoefficient();
+		calculateDensity(timestamp);
 		calculateType(dimensions);
+	}
+	
+	//Return 0 if equal
+	@Override
+	public int compareTo(Grid g) {
+		if (partitionSets.size() != g.partitionSets.size()) return -1;
+		for (int i=0;i<partitionSets.size();i++){
+			String one = partitionSets.get(i).getWord();
+			String two = g.partitionSets.get(i).getWord();
+			if (!one.equalsIgnoreCase(two)) return -1;
+		}
+		return 0;
 	}
 	
 	
@@ -66,5 +78,7 @@ public class Grid {
 	public void changeTimeRemoved(int curtime){
 		this.tRemoved = curtime;
 	}
+
+	
 	
 }
