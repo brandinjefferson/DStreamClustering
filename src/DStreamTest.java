@@ -2,9 +2,12 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.LinkedList;
@@ -19,12 +22,14 @@ import twitter4j.auth.AccessToken;
 
 public class DStreamTest {
 
-	//Object[][] density_grid = new Object[8][8];
 	public static int dimensions = 0; //The number of unique words found
 	private static volatile int timestamp; // t, the current time as an integer
-	private static int gaptime = 100; // gap, displays the total 
+	private static volatile int gaptime = 100; // gap, displays the total 
 	public static HashMap<String, Integer> wordCount; //A word count vector - keeps track of the # of times a word has appeared
 	public static HashMap<String, Record> recordsList; //Keeps one copy of each record for every grid to use in updates
+	public static volatile Thread newthread;
+	public static ArrayList<LinkedList<Grid>> clusterlist;
+	public static int totalgridct = 0;
 	
 	//First List = S, Second List = Si/grids, Third List = ji/partitions
 	//public static LinkedList<LinkedList<LinkedList<Record>>> densitygrid = new LinkedList<LinkedList<LinkedList<Record>>>(); 
@@ -40,6 +45,7 @@ public class DStreamTest {
 	@Test
 	public void test() {
 		//fail("Not yet implemented");
+		
 		Scanner reader = new Scanner(System.in);
 		System.out.print("Begin (0 = No, 1 = Yes): ");
 		int choice = reader.nextInt();
@@ -47,6 +53,21 @@ public class DStreamTest {
 			getTweets();
 			//Create new thread for online component
 			//Create new thread for offline component
+			newthread = new Thread(new Runnable(){
+				public void run(){
+					while(true){
+						if (timestamp==gaptime){
+							initialclustering();
+						}
+						else if (timestamp%gaptime == 0 && timestamp!=gaptime){
+							//Remove sporadic grids
+							adjustclustering();
+						}
+					}
+				}
+			});
+			newthread.setName("Offline Component");
+			newthread.start();
 		}
 		reader.close();
 	}
@@ -89,7 +110,6 @@ public class DStreamTest {
 				Record[] currentRecords = convertDataRecords(tokens);
 				mapping(currentRecords);
 				
-				timestamp+=1;
 			}
 
 			@Override
@@ -194,9 +214,69 @@ public class DStreamTest {
 			Grid g = new Grid(timestamp, dimensions, array);
 			if (!gridlist.find(g,timestamp,dimensions)){
 				gridlist.add(g);
+				calculateGaptime();
 			}
+			if (timestamp%gaptime == 0){
+				
+			}
+			timestamp+=1;
 		}
 	}
 	
+	//This determines the gap time.
+	// N is the total number of grids ever added
+	// 2.5 is Cm, the same used to determine grid density
+	// 0.6 is Cl, the same used to determine grid density
+	public static void calculateGaptime(){
+		double top = totalgridct - 2.5;
+		double bot = totalgridct - 0.6;
+		double fin = Math.max(4.0011, top/bot);
+		gaptime = (int)Math.floor(Math.log(fin) / Math.log(0.7));
+	}
+	
+	public static void initialclustering(){
+		//Update the density of all grids
+		//Assign dense grids to clusters
+		gridlist.initialInOrderVisit(timestamp,clusterlist,dimensions);
+		int m = gridlist.getCurrentCluster();
+		boolean changesPossible = true;
+		
+		while (changesPossible){
+			//foreach cluster c
+			for (int i=0;i<m;i++){
+				//foreach outside grid g of c
+				ArrayList<Grid> outsiders = outsideGrids(clusterlist.get(i));
+				for (int j=0;j<outsiders.size();j++){
+					//foreach neighboring grid h of g
+					ArrayList<Grid> neighbors = new ArrayList<Grid>();
+					gridlist.neighborInOrderVisit(outsiders.get(j), neighbors);
+				}
+			}
+		}
+		
+		//newthread = null;		//Ends the thread once the clustering is finished.
+	}
+	
+	private static ArrayList<Grid> outsideGrids(LinkedList<Grid> cluster){
+		ArrayList<Grid> outsiders = new ArrayList<Grid>();
+		boolean transAvailable = false;
+		ListIterator<Grid> it = cluster.listIterator();
+		while (it.hasNext()){
+			if (it.next().getLabel() == Grid.GridType.TRANSITIVE){
+				transAvailable = true;
+				outsiders.add(it.next());
+			}
+			if (it.next().getLabel() == Grid.GridType.DENSE && !transAvailable){
+				outsiders.add(it.next());
+			}
+		}
+		
+		return outsiders;
+	}
+	
+	public static void adjustclustering(){
+		
+		//newthread = null;		//Ends the thread once the clustering is finished.
+	}
 	
 }

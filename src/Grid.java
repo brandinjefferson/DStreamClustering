@@ -5,6 +5,7 @@
  * */
 import java.util.ArrayList;
 
+
 public class Grid implements Comparable<Grid> {
 
 	//These variables function as the characteristic vector
@@ -13,11 +14,13 @@ public class Grid implements Comparable<Grid> {
 	private int tUpdated;		//Last time updated
 	private int tRemoved;		//Last time removed from the grid list
 	private GridType label;		//Current grid's type
+	private int cluster;		//The cluster this grid belongs to - 0 means it's not in a cluster
 	
 	//The list of records within the given grid
+	//Act like a pointer
 	private ArrayList<Record> partitionSets;
 	
-	private enum GridType {
+	public enum GridType {
 		DENSE, TRANSITIVE, SPARSE;
 	}
 	
@@ -26,9 +29,12 @@ public class Grid implements Comparable<Grid> {
 	public Grid(int timestamp, int dimensions,ArrayList<Record> list){
 		tUpdated = timestamp;
 		tRemoved = 0;
-		density = 0.0;
+		for (Record e : list){
+			density+=e.getDensityCoefficient();
+		}
 		partitionSets = list;
 		calculateType(dimensions);
+		cluster = 0;
 	}
 	
 	//Should be updateCharacteristicVector
@@ -75,10 +81,34 @@ public class Grid implements Comparable<Grid> {
 		else this.label = GridType.TRANSITIVE;
 	}
 	
+	public GridType getLabel(){
+		return this.label;
+	}
+	
 	public void changeTimeRemoved(int curtime){
 		this.tRemoved = curtime;
 	}
-
 	
+	public void setCluster(int cluster){
+		this.cluster = cluster;
+	}
+	
+	public int getCluster(){
+		return this.cluster;
+	}
+
+	/**
+	 * Returns true if the current grid and g have at least one record that is the same.
+	 * @param g A grid to compare to
+	 * @return
+	 */
+	public boolean findPartitions(Grid g){
+		for (Record e : g.partitionSets){
+			for (Record t : partitionSets){
+				if (e.equals(t)) return true;
+			}
+		}
+		return false;
+	}
 	
 }

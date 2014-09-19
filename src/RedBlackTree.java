@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class RedBlackTree {
 	   Node root; // Package access, for testing
@@ -6,6 +8,9 @@ public class RedBlackTree {
 	   static final int RED = 0;
 	   private static final int NEGATIVE_RED = -1;
 	   private static final int DOUBLE_BLACK = 2;
+	   
+	   private static int size = 0;
+	   private static int currentCluster = 1;
 
 	   /**
 	      Constructs an empty tree.
@@ -28,6 +33,7 @@ public class RedBlackTree {
 	      if (root == null) { root = newNode; }
 	      else { root.addNode(newNode); }
 	      fixAfterAdd(newNode);
+	      size+=1;
 	   }
 
 	   /**
@@ -111,15 +117,25 @@ public class RedBlackTree {
 	      toBeRemoved.data = smallest.data;
 	      fixBeforeRemove(smallest);
 	      smallest.replaceWith(smallest.right);
+	      size-=1;
 	   }
 	   
+	   public int getSize(){
+		   return size;
+	   }
+	   
+	   public int getCurrentCluster(){
+		   return currentCluster;
+	   }
 	   /**
 	      Visits all nodes of this tree in order.
-	      @param v the visitor to apply at each node
+	      @param curtime - the current timestamp
+	      @param clusters - a list of clusters
+	      @param d - the number of dimensions
 	   */
-	   public void inOrderVisit(Visitor v)
+	   public void initialInOrderVisit(int curtime, ArrayList<LinkedList<Grid>> clusters,int d)
 	   {
-	      inOrderVisit(root, v);
+		   initialInOrderVisit(root,curtime,clusters,d);
 	   }
 	   
 	   public static interface Visitor
@@ -131,12 +147,37 @@ public class RedBlackTree {
 	      void visit(Node n);
 	   }
 	   
-	   private static void inOrderVisit(Node n, Visitor v)
+	   private static void initialInOrderVisit(Node n,int curtime,ArrayList<LinkedList<Grid>> clusters,int d)
 	   {
 	      if (n == null) return;
-	      inOrderVisit(n.left, v);
-	      v.visit(n);
-	      inOrderVisit(n.right, v);
+	      initialInOrderVisit(n.left,curtime,clusters,d);
+	      n.data.calculateDensity(curtime);
+	      n.data.calculateType(d);
+	      if (n.data.getLabel() == Grid.GridType.DENSE){
+	    	  LinkedList<Grid> cluster = new LinkedList<Grid>();
+	    	  cluster.add(n.data);
+	    	  clusters.add(cluster);
+	    	  n.data.setCluster(currentCluster);
+	    	  currentCluster+=1;
+	      }
+	      initialInOrderVisit(n.right,curtime,clusters,d);
+	   }
+	   
+	   /**
+	    * Use this to get neighbors
+	    */
+	   public void neighborInOrderVisit(Grid g,ArrayList<Grid> neighbor){
+		   neighborInOrderVisit(root,g,neighbor);
+	   }
+	   
+	   private static void neighborInOrderVisit(Node n,Grid g,ArrayList<Grid> neighbor){
+		   if (n==null) return;
+		   neighborInOrderVisit(n.left,g,neighbor);
+		   //If these grids aren't in the same cluster and are different, continue
+		   if (n.data.getCluster() != g.getCluster() && n.data.compareTo(g) != 0){
+			   if (n.data.findPartitions(g)) neighbor.add(g);
+		   }
+		   neighborInOrderVisit(n.right,g,neighbor);
 	   }
 	   
 	   /**
