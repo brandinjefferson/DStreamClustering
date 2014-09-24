@@ -12,7 +12,7 @@ public class Record extends Object {
 	private String word;
 	private Double densityCoefficient;
 	private int timestamp;
-	public HashMap<String,Record> connections;	//Counts number of times word has shown up with the current record
+	public HashMap<String,Integer> connections;	//Counts number of times word has shown up with the current record
 											//Use wordCount as reference for indexes
 											//Considered the partitions for a space (each word is a space)
 	private boolean newrecord;				//Set to true if this record is new, false if it has been seen before
@@ -20,7 +20,7 @@ public class Record extends Object {
 	public Record(String _word, int time){
 		this.word = _word;
 		this.timestamp = time;
-		this.connections = new HashMap<String,Record>();
+		this.connections = new HashMap<String,Integer>();
 		this.densityCoefficient = 1.0;
 	}
 	
@@ -28,6 +28,7 @@ public class Record extends Object {
 		calculateDensityCoefficient(curTimeStamp);
 		updateTimestamp(curTimeStamp);
 	}
+	
 	
 	//Calculates the density coefficient for the current record
 	//using its timestamp and a given value (lambda) as the decay factor
@@ -65,24 +66,30 @@ public class Record extends Object {
 	//a token as a key
 	// listOfRecords - the word count vector/recordsList in DStreamTest
 	// tokens - list of words that occurred with the current word
-	public void initConnections(HashMap<String,Record> listOfRecords){
+	public void initConnections(HashMap<String,Integer> listOfRecords){
 		this.connections = listOfRecords;
 	}
 	
 	//********
 	//Places a new connection on an old record
 	public void addConnection(Record e){
-		this.connections.put(e.getWord(), e);
+		this.connections.put(e.getWord(), 1);
 	}
 	
 	//
 	public void updateConnections(Record[] e){
-		
+		for (int i=0;i<e.length;i++){
+			this.connections.put(e[i].getWord(), connections.get(e[i].getWord())+1);
+		}
 	}
 	//Looks for a record with the given key within the connections hashmap
 	//If it exists, return true
 	public boolean findRecord(String key){
 		return this.connections.containsKey(key);
+	}
+	
+	public int getWordCount(String key){
+		return this.connections.get(key);
 	}
 	
 	@Override

@@ -111,4 +111,16 @@ public class Grid implements Comparable<Grid> {
 		return false;
 	}
 	
+	public Record getPartition(int index){
+		return partitionSets.get(index);
+	}
+	
+	public int size(){
+		return partitionSets.size();
+	}
+	
+	public ArrayList<Record> getAllPartitions(){
+		return partitionSets;
+	}
+	
 }
