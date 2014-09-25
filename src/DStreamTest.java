@@ -1,17 +1,10 @@
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
-
-
-
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.LinkedList;
 
 import twitter4j.StallWarning;
@@ -169,19 +162,6 @@ public class DStreamTest {
 	}
 	
 	private Record[] convertDataRecords(String[] tokens){
-		/*ArrayList<Record> tempArray = new ArrayList<Record>();
-		for (String text : tokens){
-			Record newRecord = new Record(text,timestamp);
-			if (wordCount.get(text) == 1){
-				//Initialize connections if the record is new. 
-				//If the record isn't new, then updateConnections will be called after finding
-				//the record within the grid and mapping it.
-				newRecord.initConnections(wordCount,tokens);
-			}
-			tempArray.add(newRecord);
-		}
-		return tempArray;*/
-		
 		Record[] tempArray = new Record[tokens.length];
 		for (int i=0;i<tokens.length;i++){
 			Record temp = new Record(tokens[i],timestamp+timeplaceholder);
@@ -193,6 +173,7 @@ public class DStreamTest {
 	
 	private void addDimensions(){
 		dimensions = wordCount.size();
+		totalgridct = dimensions*dimensions;
 	}
 	
 	//Map a record to a grid
@@ -204,7 +185,7 @@ public class DStreamTest {
 			}
 			Grid g = new Grid(timestamp+timeplaceholder, dimensions, array);
 			if (!gridlist.find(g,timestamp+timeplaceholder,dimensions)){
-				totalgridct++;
+				//totalgridct++;
 				gridlist.add(g);
 				calculateGaptime();
 			}
@@ -215,10 +196,10 @@ public class DStreamTest {
 	
 	//This determines the gap time.
 	// N is the total number of grids ever added
-	// 2.5 is Cm, the same used to determine grid density
+	// 4.0 is Cm, the same used to determine grid density
 	// 0.6 is Cl, the same used to determine grid density
 	public static void calculateGaptime(){
-		double top = totalgridct - 2.5;
+		double top = totalgridct - 4.0;
 		double bot = totalgridct - 0.6;
 		double fin = Math.max(4.0011, top/bot);
 		gaptime = (int)Math.floor(Math.log(fin) / Math.log(0.7));
@@ -227,7 +208,7 @@ public class DStreamTest {
 	public static void initialclustering(){
 		//Update the density of all grids
 		//Assign dense grids to clusters
-		gridlist.initialInOrderVisit(timestamp,clusterlist,dimensions);
+		gridlist.initialInOrderVisit(timestamp,clusterlist,totalgridct);
 		int m = gridlist.getCurrentCluster(),loopsWithoutChange=0;
 		boolean changesPossible = true;
 		
@@ -250,7 +231,7 @@ public class DStreamTest {
 						for (Record rec : neighbors.get(u).getAllPartitions()){
 							attraction2+=initialAttraction(rec, outsiders.get(j), posdiff);
 						}
-						double val = (2.5/((dimensions*dimensions)*(1-0.7)));
+						double val = (4.0/((dimensions*dimensions)*(1-0.7))); //TO-DO P probably needs to be changed
 						if (attraction1 > val && attraction2 > val){
 							if (clusterlist.get(outsiders.get(j).getCluster()).size() > 
 								clusterlist.get(neighbors.get(u).getCluster()).size()){
@@ -357,7 +338,92 @@ public class DStreamTest {
 	}
 	
 	public static void adjustclustering(){
+		ArrayList<Grid> changes = new ArrayList<Grid>();
+		gridlist.adjustInOrderVisit(timestamp, changes, totalgridct);
 		
+		for (Grid g : changes){
+			if (g.getLabel() == Grid.GridType.SPARSE){
+				clusterlist.get(g.getCluster()).remove(g);
+				gridlist.find(g, 0);
+			}
+			else if (g.getLabel() == Grid.GridType.DENSE){
+				//find neighboring grid with the largest cluster
+				ArrayList<Grid> neighbors = new ArrayList<Grid>();
+				gridlist.neighborInOrderVisit(g, neighbors);
+				Grid h = new Grid();
+				int maxsize = 0;
+				for (Grid temp : neighbors){
+					int size = clusterlist.get(temp.getCluster()).size();
+					if (size>maxsize){
+						maxsize = size;
+						h = temp;
+					}
+				}
+				if (h.getLabel() == Grid.GridType.DENSE){
+					if (g.getCluster() == 0){
+						g.setCluster(h.getCluster());
+						clusterlist.get(h.getCluster()).add(g);
+					}
+					else if (clusterlist.get(g.getCluster()).size()>maxsize){
+						for (Grid wut : clusterlist.get(h.getCluster())){
+							wut.setCluster(g.getCluster());
+							
+						}
+					}
+					else if (clusterlist.get(g.getCluster()).size()<=maxsize){
+						for (Grid wut : clusterlist.get(g.getCluster())){
+							wut.setCluster(h.getCluster());
+							
+						}
+					}
+				}
+				else if (h.getLabel() == Grid.GridType.TRANSITIVE){
+					int origcluster = g.getCluster();
+					g.setCluster(h.getCluster());
+					clusterlist.get(h.getCluster()).add(g);
+					ArrayList<Grid> outsiders = outsideGrids(clusterlist.get(h.getCluster()));
+					if (g.getCluster() == 0 && outsiders.contains(h)){
+						clusterlist.get(origcluster).remove(g);
+					}
+					else if (g.getCluster() != 0 &&
+							clusterlist.get(origcluster).size() >= clusterlist.get(h.getCluster()).size()){
+						g.setCluster(origcluster);
+						h.setCluster(origcluster);
+						clusterlist.get(g.getCluster()).add(g);
+						clusterlist.get(g.getCluster()).add(h);
+						clusterlist.get(h.getCluster()).remove(g);
+					}
+				}
+			}
+			else if (g.getLabel() == Grid.GridType.TRANSITIVE){
+				ArrayList<Grid> neighbors = new ArrayList<Grid>();
+				gridlist.neighborInOrderVisit(g, neighbors);
+				int maxsize=0,largestcluster=0;
+				for (Grid h : neighbors){
+					if (h.getLabel() == Grid.GridType.DENSE){
+						Integer posdiff = determinePositionalDifference(g, h);
+						double val = (4.0/((dimensions*dimensions)*(1-0.7))); //Theta
+						double attr1=0.0,attr2=0.0;
+						for (Record x : g.getAllPartitions()){
+							attr1+=initialAttraction(x, h, posdiff);
+						}
+						for (Record x : h.getAllPartitions()){
+							attr2+=initialAttraction(x, g, posdiff);
+						}
+						if (attr1 > val && attr2 > val){
+							if (clusterlist.get(h.getCluster()).size() > maxsize){
+								maxsize = clusterlist.get(h.getCluster()).size();
+								largestcluster = h.getCluster();
+							}
+						}
+					}
+				}
+				clusterlist.get(g.getCluster()).remove(g);
+				g.setCluster(largestcluster);
+				clusterlist.get(largestcluster).add(g);
+			}
+		}
+		clusteringactive = false;
 		//newthread = null;		//Ends the thread once the clustering is finished.
 	}
 	

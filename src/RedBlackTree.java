@@ -60,6 +60,28 @@ public class RedBlackTree {
 	   }
 	   
 	   /**
+	      finds a grid in the tree and updates its cluster
+	      @param obj - the object to find
+	      @param newcluster - the integer representation of the cluster to change
+	      @return true if the object is contained in the tree
+	   */
+	   public void find(Grid obj,int newcluster)
+	   {
+	      Node current = root;
+	      while (current != null)
+	      {
+	         int d = current.data.compareTo(obj);
+	         if (d == 0){
+	        	 current.data.setCluster(newcluster);
+	        	 return;
+	         }
+	         else if (d > 0) current = current.left;
+	         else current = current.right;
+	      }
+	   }
+	   
+	   
+	   /**
 	      Tries to remove an object from the tree. Does nothing
 	      if the object is not contained in the tree.
 	      @param obj the object to remove
@@ -120,6 +142,46 @@ public class RedBlackTree {
 	      size-=1;
 	   }
 	   
+	   /**
+	    * This is literally the same as remove, except it doesn't search from the root.
+	    * The node that is passed is already there. This is private so it can only be used within
+	    * adjustInOrderTraversal
+	    * @param toBeRemoved - the grid to remove
+	    */
+	   private void miniRemove(Node toBeRemoved){
+		   if (toBeRemoved.left == null || toBeRemoved.right == null)
+		      {
+		         Node newChild;
+		         if (toBeRemoved.left == null) { newChild = toBeRemoved.right; }
+		         else { newChild = toBeRemoved.left; }
+
+		         fixBeforeRemove(toBeRemoved); 
+		         
+		         if (toBeRemoved.parent == null) { root = newChild; } // Found in root
+		         else { toBeRemoved.replaceWith(newChild); }
+		         return;
+		      }
+		      
+		      // Neither subtree is empty
+
+		      // Find smallest element of the right subtree
+
+		      Node smallest = toBeRemoved.right;
+		      while (smallest.left != null)
+		      {
+		         smallest = smallest.left;
+		      }
+
+		      // smallest contains smallest child in right subtree
+		         
+		      // Move contents, unlink child
+
+		      toBeRemoved.data = smallest.data;
+		      fixBeforeRemove(smallest);
+		      smallest.replaceWith(smallest.right);
+		      size-=1;
+	   }
+	   
 	   public int getSize(){
 		   return size;
 	   }
@@ -131,7 +193,7 @@ public class RedBlackTree {
 	      Visits all nodes of this tree in order.
 	      @param curtime - the current timestamp
 	      @param clusters - a list of clusters
-	      @param d - the number of dimensions
+	      @param d - the total grid count (gridct)
 	   */
 	   public void initialInOrderVisit(int curtime, ArrayList<LinkedList<Grid>> clusters,int d)
 	   {
@@ -178,6 +240,41 @@ public class RedBlackTree {
 			   if (n.data.findPartitions(g)) neighbor.add(g);
 		   }
 		   neighborInOrderVisit(n.right,g,neighbor);
+	   }
+	   
+	   /**
+	    * 
+	    * @param curTime - current time stamp
+	    * @param changes - a list of the grids that have had their labels changed
+	    * @param gridct - The total number of grids that ever existed
+	    */
+	   public void adjustInOrderVisit(int curTime,ArrayList<Grid> changes,int gridct){
+		   adjustInOrderVisit(root,curTime,changes,gridct);
+	   }
+	   
+	   private void adjustInOrderVisit(Node n, int time, ArrayList<Grid> changes,int gridct){
+		   if (n==null)return;
+		   adjustInOrderVisit(n.left,time,changes,gridct);
+		   
+		   n.data.calculateDensity(time);
+		   n.data.calculateType(gridct);
+		   //Remove grid if sporadic
+		   if (n.data.getLabel() == Grid.GridType.SPARSE){
+			   double lambda = Math.pow(0.7, (time - n.data.getTimeUpdated())+1);
+			   double threshold = (0.6 * lambda)/(gridct*(1-0.7));
+			   if (n.data.getDensity() < threshold){
+				   miniRemove(n);
+			   }
+			   else{
+				 //Add to list of changed grids if the label changed
+				   if (n.data.labelchanged){
+					   n.data.resetLabelWatcher();
+					   changes.add(n.data);
+				   }
+			   }
+		   }
+		   
+		   adjustInOrderVisit(n.right,time,changes,gridct);
 	   }
 	   
 	   /**

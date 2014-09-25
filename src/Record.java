@@ -1,12 +1,4 @@
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import twitter4j.Status;
-
 import java.util.HashMap;
-import java.util.Iterator;
 
 public class Record extends Object {
 	private String word;
@@ -27,6 +19,10 @@ public class Record extends Object {
 	public void updateRecord(int curTimeStamp){
 		calculateDensityCoefficient(curTimeStamp);
 		updateTimestamp(curTimeStamp);
+	}
+	
+	public int getTimeArrived(){
+		return this.timestamp;
 	}
 	
 	
