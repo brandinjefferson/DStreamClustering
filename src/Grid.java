@@ -164,4 +164,12 @@ public class Grid implements Comparable<Grid> {
 		return partitionSets;
 	}
 	
+	public String printPartitions(){
+		String aString = "";
+		for (Record e : partitionSets){
+			aString = aString + e.getWord() + " ";
+		}
+		return aString;
+	}
+	
 }

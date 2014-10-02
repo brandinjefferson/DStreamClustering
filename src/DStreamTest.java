@@ -20,7 +20,7 @@ public class DStreamTest {
 	public static volatile int dimensions = 0; //The number of unique words found
 	private static volatile int timestamp; // t, the current time as an integer
 	private static int timeplaceholder=0;
-	private static volatile int gaptime = 100; // gap, displays the total 
+	private static volatile int gaptime = -1; // gap, displays the total 
 	public static volatile HashMap<String, Integer> wordCount; //A word count vector - keeps track of the # of times a word has appeared
 	public static HashMap<String, Record> recordsList; //Keeps one copy of each record for every grid to use in updates
 	public static volatile Thread newthread;
@@ -62,7 +62,16 @@ public class DStreamTest {
 							//Remove sporadic grids
 							adjustclustering();
 						}
-						if (clusteringactive) clusteringactive=false;
+						if (clusteringactive){ 
+							clusteringactive=false;
+							for (LinkedList<Grid> it : clusterlist){
+								ListIterator<Grid> iterator = it.listIterator();
+								while (iterator.hasNext()){
+									Grid temp = iterator.next();
+									System.out.print("Cluster " + temp.getCluster() + ": " + temp.printPartitions());
+								}
+							}
+						}
 					}
 				}
 			});
@@ -104,6 +113,7 @@ public class DStreamTest {
 			@Override
 			public void onStatus(Status status) {
 				// TODO Auto-generated method stub
+				System.out.println(status.getText());
 				//Think about putting these in different threads
 				String[] tokens = tokenizeTweet(status);
 				addToListOfRecords(tokens);
@@ -173,7 +183,7 @@ public class DStreamTest {
 	
 	private void addDimensions(){
 		dimensions = wordCount.size();
-		totalgridct = dimensions*dimensions;
+		totalgridct = (int)Math.pow(2.0, (double)dimensions);	//# of grids possible = Powerset(S)
 	}
 	
 	//Map a record to a grid
@@ -185,7 +195,6 @@ public class DStreamTest {
 			}
 			Grid g = new Grid(timestamp+timeplaceholder, dimensions, array);
 			if (!gridlist.find(g,timestamp+timeplaceholder,dimensions)){
-				//totalgridct++;
 				gridlist.add(g);
 				calculateGaptime();
 			}
@@ -201,7 +210,7 @@ public class DStreamTest {
 	public static void calculateGaptime(){
 		double top = totalgridct - 4.0;
 		double bot = totalgridct - 0.6;
-		double fin = Math.max(4.0011, top/bot);
+		double fin = Math.max(bot/top, top/bot);	
 		gaptime = (int)Math.floor(Math.log(fin) / Math.log(0.7));
 	}
 	
@@ -231,8 +240,9 @@ public class DStreamTest {
 						for (Record rec : neighbors.get(u).getAllPartitions()){
 							attraction2+=initialAttraction(rec, outsiders.get(j), posdiff);
 						}
-						double val = (4.0/((dimensions*dimensions)*(1-0.7))); //TO-DO P probably needs to be changed
+						double val = (4.0/(totalgridct*totalgridct)*(1-0.7)); // |P| = |Powerset(S) X Powerset(S)|
 						if (attraction1 > val && attraction2 > val){
+							loopsWithoutChange = 0;
 							if (clusterlist.get(outsiders.get(j).getCluster()).size() > 
 								clusterlist.get(neighbors.get(u).getCluster()).size()){
 								for (Grid grid : clusterlist.get(neighbors.get(u).getCluster())){
@@ -251,8 +261,12 @@ public class DStreamTest {
 						}
 						else if (attraction1 > val && attraction2 > val 
 								&& neighbors.get(u).getLabel()==Grid.GridType.TRANSITIVE){
+							loopsWithoutChange = 0;
 							neighbors.get(u).setCluster(outsiders.get(j).getCluster());
 							clusterlist.get(outsiders.get(j).getCluster()).add(neighbors.get(u));
+						}
+						else {
+							loopsWithoutChange++;
 						}
 					}
 				}
@@ -402,7 +416,7 @@ public class DStreamTest {
 				for (Grid h : neighbors){
 					if (h.getLabel() == Grid.GridType.DENSE){
 						Integer posdiff = determinePositionalDifference(g, h);
-						double val = (4.0/((dimensions*dimensions)*(1-0.7))); //Theta
+						double val = (4.0/((totalgridct*totalgridct)*(1-0.7))); //Theta
 						double attr1=0.0,attr2=0.0;
 						for (Record x : g.getAllPartitions()){
 							attr1+=initialAttraction(x, h, posdiff);
