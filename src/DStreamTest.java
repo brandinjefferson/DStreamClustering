@@ -52,18 +52,21 @@ public class DStreamTest {
 			//Create new thread for offline component
 			newthread = new Thread(new Runnable(){
 				public void run(){
+					System.out.println("Made it to Clustering Thread.");
 					while(true){
 						if (timestamp==gaptime){
 							clusteringactive=true;
+							System.out.println("Beginning initial clustering.");
 							initialclustering();
 						}
-						else if (timestamp%gaptime == 0 && timestamp!=gaptime){
+						else if (timestamp%gaptime == 0 && timestamp!=gaptime && timestamp > 0){
 							clusteringactive=true;
 							//Remove sporadic grids
 							adjustclustering();
 						}
 						if (clusteringactive){ 
 							clusteringactive=false;
+							System.out.println("Adjusting clusters.");
 							for (LinkedList<Grid> it : clusterlist){
 								ListIterator<Grid> iterator = it.listIterator();
 								while (iterator.hasNext()){
