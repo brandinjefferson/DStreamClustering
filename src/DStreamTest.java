@@ -43,6 +43,10 @@ public class DStreamTest {
 	public void test() {
 		//fail("Not yet implemented");
 		
+		mainApp();
+	}
+	
+	public void mainApp(){
 		Scanner reader = new Scanner(System.in);
 		System.out.print("Begin (0 = No, 1 = Yes): ");
 		int choice = reader.nextInt();
@@ -62,6 +66,7 @@ public class DStreamTest {
 						else if (timestamp%gaptime == 0 && timestamp!=gaptime && timestamp > 0){
 							clusteringactive=true;
 							//Remove sporadic grids
+							System.out.println("Adjusting clusters");
 							adjustclustering();
 						}
 						if (clusteringactive){ 
@@ -80,6 +85,9 @@ public class DStreamTest {
 			});
 			newthread.setName("Offline Component");
 			newthread.start();
+		}
+		while (choice==1){
+			choice=reader.nextInt();
 		}
 		reader.close();
 	}
@@ -116,11 +124,12 @@ public class DStreamTest {
 			@Override
 			public void onStatus(Status status) {
 				// TODO Auto-generated method stub
-				System.out.println(status.getText());
 				//Think about putting these in different threads
 				String[] tokens = tokenizeTweet(status);
 				addToListOfRecords(tokens);
+				System.out.println("Tweets added to list of records");
 				Record[] currentRecords = convertDataRecords(tokens);
+				System.out.println("Tweets turned into records");
 				mapping(currentRecords);
 				if (clusteringactive) timeplaceholder++;
 				else {
@@ -129,6 +138,7 @@ public class DStreamTest {
 						timeplaceholder=0;
 					}
 					timestamp++;
+					System.out.println(timestamp);
 				}
 			}
 
@@ -162,6 +172,7 @@ public class DStreamTest {
 			if (wordCount.containsKey(text)){
 				Integer t = wordCount.get(text)+1;
 				wordCount.put(text, t);
+				System.out.println("Added word");
 				//recordsList.get(text).updateRecord(timestamp);
 			}
 			//Otherwise add it with a count of 1
@@ -169,6 +180,7 @@ public class DStreamTest {
 				wordCount.put(text, 1);
 				Record temp = new Record(text,timestamp+timeplaceholder);
 				recordsList.put(text, temp);
+				System.out.println("Added word");
 			}
 		}
 		addDimensions();
